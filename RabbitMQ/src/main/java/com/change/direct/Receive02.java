@@ -1,0 +1,40 @@
+package com.change.direct;
+
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.DeliverCallback;
+import com.rabbitmq.client.Delivery;
+import com.utils.Utils;
+
+import java.io.IOException;
+import java.util.concurrent.TimeoutException;
+
+/**
+ * Created by KingsLanding on 2022/9/18 16:36
+ */
+public class Receive02 {
+    public static final String Exchanges_name = "logs_direct";
+
+    public static void main(String[] args) throws IOException, TimeoutException {
+        Channel channel = Utils.RabbitChannel();
+
+        //声明交换机
+        channel.exchangeDeclare(Exchanges_name, "direct");
+
+        //生成一个临时队列
+        String queueName = channel.queueDeclare().getQueue();
+        //将该临时队列与交换机进行绑定
+        //设置routingKey指定路由key
+        channel.queueBind(queueName, Exchanges_name, "receive02");
+
+        DeliverCallback deliverCallback = new DeliverCallback() {
+            @Override
+            public void handle(String consumerTag, Delivery message) throws IOException {
+                String strMessage = new String(message.getBody());
+                System.out.println("R2消息接收：" + strMessage);
+            }
+        };
+
+        channel.basicConsume(queueName, true, deliverCallback, consumerTag -> {
+        });
+    }
+}
